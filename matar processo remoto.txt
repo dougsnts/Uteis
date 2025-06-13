@@ -1,0 +1,5 @@
+C:tasklist /U administrador /P senha /S ip_do_computador_remoto
+
+C:taskkill /U administrador /P senha /S ip_do_computador_remoto /PID numero_do_processo 
+
+taskkill /U administrator /P senha /S HOST /F /IM PROGRAMA /T

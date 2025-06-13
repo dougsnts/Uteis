@@ -1,0 +1,10 @@
+1 - diskpart
+2 - list disk
+3 - select disk X
+4 - clean
+5 - create partition primary
+6 - active
+7 - format fs=fat32 quick
+8 - assign
+9 - exit
+10 - copiar os dados para o pen drive

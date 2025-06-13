@@ -1,0 +1,2 @@
+IP > Firewall > Filter Rules > liberar input para IP
+VPN - Interface > GRE Tunnel

@@ -1,0 +1,1 @@
+wmic /user:administrator /node:remote-host bios get serialnumber
