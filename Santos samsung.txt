@@ -1,0 +1,13 @@
+$ wget http://www.bchemnet.com/suldr/suldr.gpg
+$ sudo apt-key add suldr.gpg
+
+Edit /etc/apt/source.list and add:
+#add the Samsung Unified Driver Repo
+deb http://www.bchemnet.com/suldr/ debian extra
+
+$ sudo apt-get update
+$ sudo apt-get install samsungmfp-data samsungmfp-driver samsungmfp-network samsungmfp-scanner samsungmfp-configurator-data samsungmfp-configurator-qt4 libsane-extras
+
+
+
+http://acassis.wordpress.com/2012/09/09/instalando-os-drivers-da-samsung-scx-3405w-no-linux/

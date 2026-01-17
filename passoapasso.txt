@@ -1,0 +1,20 @@
+#### Verificar se o Leitor/cartao esta funcioando
+
+nfc-list
+pcsc-scan
+
+
+### Descobrir a chave do cartao. Fazer isso tanto no Original qto na copia
+
+mfcuk -C -R 0:A -s 250 -S 250 -v3
+
+### Gerar dump
+mfoc -O original.dmp -k ffffffffffff(Chave descoberta)
+mfoc -O copia.dmp -l ffffffffffff
+
+###Fazer a copia
+nfc-mfclassic w b original.dmp copia.dmp
+
+
+
+

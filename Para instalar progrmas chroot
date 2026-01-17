@@ -1,0 +1,4 @@
+Para instalar progrmas chroot
+
+mount -t proc /proc /proc
+# mount -t sysfs sys /sys

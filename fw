@@ -1,0 +1,132 @@
+#!/bin/bash
+
+#if [ ! "`ifconfig | grep -o 187.11.238.245`"  ];then
+#    /etc/init.d/networking restart
+#    echo 'Sem conexão com a internet, o firewall não pode ser iniciado.'
+#elif [ "`ifconfig | grep -o 187.11.238.245`"  ];then
+    # interface de acesso pela vivo
+    externa=ppp0
+
+    # interface de acesso pelo net virtua
+    #externa=eth0
+
+    interna=eth1
+
+    #parar(){
+    iptables -X
+    iptables -Z
+    iptables -F
+    iptables -t nat -F
+    #}
+    #iniciar(){
+    iptables -A POSTROUTING -t nat -o $externa -j MASQUERADE
+    echo "1" > /proc/sys/net/ipv4/ip_forward
+    iptables -A INPUT -i $interna -p tcp --syn -j ACCEPT
+
+    # acesso ao dns da telefonica pela rede interna e externa
+    #iptables -t nat -A PREROUTING -p udp -i $interna --dport 53 -j DNAT --to 200.204.0.10:53
+    #iptables -t nat -A PREROUTING -p udp -i $interna --dport 53 -j DNAT --to 200.204.0.138:53
+    #iptables -t nat -A PREROUTING -p udp -i $externa --dport 53 -j DNAT --to 200.204.0.10:53
+    #iptables -t nat -A PREROUTING -p udp -i $externa --dport 53 -j DNAT --to 200.204.0.138:53
+
+    # acesso ao dns da net virtual pela rede interna e externa
+    #iptables -t nat -A PREROUTING -p udp -i $interna --dport 53 -j DNAT --to 201.6.0.100
+    #iptables -t nat -A PREROUTING -p udp -i $interna --dport 53 -j DNAT --to 201.6.0.101
+    #iptables -t nat -A PREROUTING -p udp -i $externa --dport 53 -j DNAT --to 201.6.0.100
+    #iptables -t nat -A PREROUTING -p udp -i $externa --dport 53 -j DNAT --to 201.6.0.101
+
+    # acesso ao email interno pelas filiais
+    # Não tirar o redirecionamento do e-mail interno utilizado pelo portal para envio de circular
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 3389  -j DNAT --to 10.0.0.6:3389
+    iptables -t nat -A PREROUTING -p udp -i $externa --dport 3389  -j DNAT --to 10.0.0.6:3389
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 8888  -j DNAT --to 10.0.0.8:80
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 5552  -j DNAT --to 10.0.0.8:5552
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 5877  -j DNAT --to 10.0.0.5:587
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 177  -j DNAT --to 10.0.0.6:177
+    iptables -t nat -A PREROUTING -p udp -i $externa --dport 177  -j DNAT --to 10.0.0.6:177
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 1433  -j DNAT --to 10.0.0.5:143
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 10001 -j DNAT --to 10.0.0.5:10000
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 222   -j DNAT --to 10.0.0.116:22
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 888   -j DNAT --to 187.17.64.162:80
+    iptables -t nat -A PREROUTING -p tcp -i $externa --dport 21   -j DNAT --to 187.17.64.162:21
+
+    # regras para ativar o proxy transparente
+    # iptables -t nat -A PREROUTING -i $interna -p tcp --dport 80 -j REDIRECT --to-port 3128
+    # iptables -t nat -A PREROUTING -i $interna -p tcp --dport 443 -j REDIRECT --to-port 3130
+    # iptables -t nat -A PREROUTING -i $externa -p tcp --dport 80 -j REDIRECT --to-port 3128
+
+    for i in `cat /etc/configuracoesFirewall/sitesPermitidos`
+    do
+        iptables -A FORWARD -i $interna -d $i -j ACCEPT
+    done
+
+    # liberação de acesso ao e-mail do terra para alguns usuários
+    iptables -A FORWARD -s 10.0.0.198 -d pop.sao.terra.com.br  -j ACCEPT
+    iptables -A FORWARD -s 10.0.0.198 -d smtp.sao.terra.com.br -j ACCEPT
+    iptables -A FORWARD -s 10.0.0.114 -d pop.sao.terra.com.br  -j ACCEPT
+    iptables -A FORWARD -s 10.0.0.114 -d smtp.sao.terra.com.br -j ACCEPT
+    iptables -A FORWARD -s 10.0.0.162 -d pop.sao.terra.com.br  -j ACCEPT
+    iptables -A FORWARD -s 10.0.0.162 -d smtp.sao.terra.com.br -j ACCEPT
+
+    # ips com acesso total na internet sem o proxy
+    for i in `cat /etc/configuracoesFirewall/ipsPermitidos`
+    do
+        iptables -A FORWARD -s `echo $i | cut -d'#' -f1` -m multiport -p tcp --dport 1:60000 -j ACCEPT
+    done
+
+    # liberação do acesso externa a vpn
+    iptables -A INPUT   -m multiport -p tcp --dport 1723 -j ACCEPT
+    iptables -A OUTPUT  -m multiport -p tcp --dport 1723 -j ACCEPT
+    iptables -A FORWARD -m multiport -p tcp --dport 1723 -j ACCEPT
+
+    # libera porta do svn
+    iptables -A FORWARD -m multiport -p tcp -i $interna --dport 3690 -j ACCEPT
+
+    for i in `cat /etc/configuracoesFirewall/portasGeraLog`
+    do
+        iptables -I INPUT -p tcp --dport $i -j LOG
+    done
+
+    # grava log de algumas portas
+
+    # otimiza o acesso a porta 80
+    iptables -t mangle -A POSTROUTING -m multiport -p tcp --sport 80,443 -j TOS --set-tos Minimize-Delay
+
+    # regras de segurança
+    echo 1 > /proc/sys/net/ipv4/conf/default/rp_filter
+    iptables -A INPUT -p tcp --dport 31337 -j DROP
+    iptables -A INPUT -p udp --dport 31337 -j DROP
+    iptables -A INPUT -p tcp --dport 12345:12346 -j DROP
+    iptables -A INPUT -p udp --dport 12345:12346 -j DROP
+    iptables -A FORWARD -p icmp --icmp-type echo-request -m limit --limit 1/s -j ACCEPT
+    iptables -A FORWARD -p tcp --syn -m limit --limit 2/s -j ACCEPT
+    iptables -A INPUT -m state --state INVALID -j DROP
+    iptables -A INPUT   -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT
+    iptables -A FORWARD -p tcp --tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT
+    iptables -A INPUT -p udp -s 0/0 -i $externa --dport 33435:33525 -j DROP
+    iptables -A INPUT -m state --state INVALID -j DROP
+    iptables -A INPUT -p tcp --tcp-flags ALL FIN,URG,PSH -j DROP
+
+    for i in `cat /etc/configuracoesFirewall/portasBloqueadasInterno`
+    do
+        iptables -A FORWARD -p tcp -i $interna --dport $i -j DROP
+    done
+
+    for i in `cat /etc/configuracoesFirewall/portasBloqueadasExterno`
+    do
+        iptables -A FORWARD -p tcp -i $externa --dport $i -j DROP
+    done
+
+    iptables -A INPUT -p tcp -i $externa -s 211.94.189.55 -j DROP
+    # fecha tudo
+    #iptables -A INPUT   -p tcp -i $externa --syn -j DROP
+    #iptables -A FORWARD -p tcp -i $externa --syn -j DROP
+    echo "Firewall iniciado."
+    #}
+    #case "$1" in
+    #"start") iniciar ;;
+    #"stop") parar ;;
+    #"restart") parar; iniciar ;;
+    #*)
+    #esac
+#fi

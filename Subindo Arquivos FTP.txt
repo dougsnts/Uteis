@@ -1,0 +1,4 @@
+Subindo arquivos para o ftp via scp
+
+
+scp "nome-arquivo" cetre@cetre.com.br:~/public_html

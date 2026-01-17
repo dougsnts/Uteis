@@ -1,0 +1,4 @@
+ 
+pdftk arquivo.pdf cat 1-6south output saida.pdf
+
+pdftk [nome do arquivo] cat [range de paginas]south output saida.pdf

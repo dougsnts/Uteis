@@ -1,0 +1,17 @@
+COMPACTAR ARQUIVOS COM SENHA
+
+tar czf - "arquivo" | openssl des3 -salt -k "senha" | dd of=arquivo.tar.gz
+
+DESCOMPACTAR ARQUIVOS COM SENHA
+
+dd if=arquivo.tar.gz | openssl des3 -d -k $senha | tar xzf -
+
+
+DIVIDINDO OS AQUIVOS EM PARTES
+
+split -b"tamanho"m "nome do arquivo" "nome do arquivo"
+
+UNINDO ARQUIVOS DIVIDOS PELO SPLIT
+
+cat "nome do arquivo"* > nome do arquivo
+
